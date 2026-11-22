@@ -1,0 +1,136 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidGroove(groove) {
+      return groove in ['trap_soul', 'boom_bap', 'afro_fusion', 'synth_wave', 'neo_soul'];
+    }
+
+    function isValidSpeaker(speaker) {
+      return speaker in ['PRODUCER', 'ENGINEER', 'LYRICIST', 'SYSTEM'];
+    }
+
+    // --- ENTITY VALIDATION BLUEPRINTS ---
+    function isValidStudioSession(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.bpm is int && data.bpm >= 60 && data.bpm <= 180 &&
+             data.musicalKey is string && data.musicalKey.size() >= 1 && data.musicalKey.size() <= 32 &&
+             data.grooveStyle is string && isValidGroove(data.grooveStyle) &&
+             data.hpfHz is int && data.hpfHz >= 20 && data.hpfHz <= 220 &&
+             data.eqLowDb is number && data.eqLowDb >= -12.0 && data.eqLowDb <= 12.0 &&
+             data.eqMidHz is int && data.eqMidHz >= 250 && data.eqMidHz <= 5000 &&
+             data.eqMidDb is number && data.eqMidDb >= -12.0 && data.eqMidDb <= 12.0 &&
+             data.eqHighDb is number && data.eqHighDb >= -12.0 && data.eqHighDb <= 12.0 &&
+             data.compThresholdDb is number && data.compThresholdDb >= -40.0 && data.compThresholdDb <= 0.0 &&
+             data.saturation is number && data.saturation >= 0.0 && data.saturation <= 1.0 &&
+             data.lastSpark is string && data.lastSpark.size() <= 300;
+    }
+
+    function isValidStudioMessage(data, userId, sessionId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.sessionId is string &&
+             data.sessionId == sessionId &&
+             data.speaker is string && isValidSpeaker(data.speaker) &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 8000 &&
+             data.sampleCredit is string && data.sampleCredit.size() <= 300 &&
+             data.stemPackIncluded is bool &&
+             data.stemBpm is int && data.stemBpm >= 60 && data.stemBpm <= 180 &&
+             data.stemKey is string && data.stemKey.size() <= 32 &&
+             data.stemGroove is string && isValidGroove(data.stemGroove);
+    }
+
+    // --- COLLECTION RULES ---
+    match /users/{userId}/sessions/{sessionId} {
+      allow get: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
+      allow list: if isOwner(userId) && isValidId(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(sessionId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'title', 'bpm', 'musicalKey', 'grooveStyle',
+                         'hpfHz', 'eqLowDb', 'eqMidHz', 'eqMidDb', 'eqHighDb',
+                         'compThresholdDb', 'saturation', 'lastSpark', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'title', 'bpm', 'musicalKey', 'grooveStyle',
+                         'hpfHz', 'eqLowDb', 'eqMidHz', 'eqMidDb', 'eqHighDb',
+                         'compThresholdDb', 'saturation', 'lastSpark', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       isValidStudioSession(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidId(sessionId) &&
+                       isValidStudioSession(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().updatedAt is timestamp && incoming().updatedAt <= request.time &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'title', 'bpm', 'musicalKey', 'grooveStyle',
+                         'hpfHz', 'eqLowDb', 'eqMidHz', 'eqMidDb', 'eqHighDb',
+                         'compThresholdDb', 'saturation', 'lastSpark', 'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
+
+      match /messages/{messageId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidId(messageId);
+        allow list: if isOwner(userId) && isValidId(userId) && isValidId(sessionId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(sessionId) &&
+                         isValidId(messageId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'sessionId', 'speaker', 'text', 'sampleCredit',
+                           'stemPackIncluded', 'stemBpm', 'stemKey', 'stemGroove', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'sessionId', 'speaker', 'text', 'sampleCredit',
+                           'stemPackIncluded', 'stemBpm', 'stemKey', 'stemGroove', 'createdAt'
+                         ]) &&
+                         incoming().createdAt is timestamp && incoming().createdAt <= request.time &&
+                         isValidStudioMessage(incoming(), userId, sessionId) &&
+                         existsAfter(/databases/$(database)/documents/users/$(userId)/sessions/$(sessionId));
+
+        allow update: if false;
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(sessionId) && isValidId(messageId);
+      }
+    }
+  }
+}

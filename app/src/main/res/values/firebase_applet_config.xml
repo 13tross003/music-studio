@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="firestore_database_id" translatable="false">ai-studio-android-quantuma-5a124b49-4928-4f19-858d-2a27ac55f9ea</string>
+    <string name="recaptcha_site_key" translatable="false">6LdqAycuAAAAAFByoGSB3bGXWaPqyZ7O3nFo5K42</string>
+</resources>

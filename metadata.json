@@ -1,0 +1,10 @@
+{
+  "name": "Hydrogen Studio",
+  "description": "Multi-agent collaborative music studio with a 7-time Grammy Sound Engineer AI, AI Lyricist, real-time voice booth, DSP console, and multi-stem WAV synthesizer.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

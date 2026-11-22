@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "StudioSession": {
+      "title": "StudioSession",
+      "description": "A persistent music production studio session with live DSP mix parameters and key/BPM configuration.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the Producer who owns this session."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the track or studio session."
+        },
+        "bpm": {
+          "type": "integer",
+          "description": "Beats per minute (60 to 180)."
+        },
+        "musicalKey": {
+          "type": "string",
+          "description": "Musical key of the track (e.g., C minor)."
+        },
+        "grooveStyle": {
+          "type": "string",
+          "enum": ["trap_soul", "boom_bap", "afro_fusion", "synth_wave", "neo_soul"],
+          "description": "Active rhythmic pocket style for the sequencer and stem synthesizer."
+        },
+        "hpfHz": {
+          "type": "integer",
+          "description": "Surgical high-pass filter cutoff frequency in Hz (20 to 220)."
+        },
+        "eqLowDb": {
+          "type": "number",
+          "description": "Low shelf EQ gain at 80 Hz in dB (-12.0 to 12.0)."
+        },
+        "eqMidHz": {
+          "type": "integer",
+          "description": "Parametric mid EQ center frequency in Hz (250 to 5000)."
+        },
+        "eqMidDb": {
+          "type": "number",
+          "description": "Parametric mid EQ gain in dB (-12.0 to 12.0)."
+        },
+        "eqHighDb": {
+          "type": "number",
+          "description": "High shelf air EQ gain at 9 kHz in dB (-12.0 to 12.0)."
+        },
+        "compThresholdDb": {
+          "type": "number",
+          "description": "Dynamic range compressor threshold in dB (-40.0 to 0.0)."
+        },
+        "saturation": {
+          "type": "number",
+          "description": "Analog harmonic saturation drive amount (0.0 to 1.0)."
+        },
+        "lastSpark": {
+          "type": "string",
+          "description": "Most recent producer spark or summary for display in the session vault."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when session was created (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when session was last updated (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "bpm",
+        "musicalKey",
+        "grooveStyle",
+        "hpfHz",
+        "eqLowDb",
+        "eqMidHz",
+        "eqMidDb",
+        "eqHighDb",
+        "compThresholdDb",
+        "saturation",
+        "lastSpark",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "StudioMessage": {
+      "title": "StudioMessage",
+      "description": "A single conversational turn in the unified 3-agent studio thread (Producer, Sound Engineer, or AI Lyricist).",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the session owner."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Parent StudioSession document ID."
+        },
+        "speaker": {
+          "type": "string",
+          "enum": ["PRODUCER", "ENGINEER", "LYRICIST", "SYSTEM"],
+          "description": "Participant speaker tag in the studio chat."
+        },
+        "text": {
+          "type": "string",
+          "description": "Spoken/written studio message, mix breakdown, or lyrics."
+        },
+        "sampleCredit": {
+          "type": "string",
+          "description": "Explicit Sample Transparency credit (Artist - Track) if referencing or flipping existing music."
+        },
+        "stemPackIncluded": {
+          "type": "boolean",
+          "description": "Whether this turn includes an inline playable/downloadable multi-stem WAV card."
+        },
+        "stemBpm": {
+          "type": "integer",
+          "description": "BPM snapshot associated with the inline stem pack."
+        },
+        "stemKey": {
+          "type": "string",
+          "description": "Musical key snapshot associated with the inline stem pack."
+        },
+        "stemGroove": {
+          "type": "string",
+          "enum": ["trap_soul", "boom_bap", "afro_fusion", "synth_wave", "neo_soul"],
+          "description": "Groove style snapshot associated with the inline stem pack."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when message was recorded (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "sessionId",
+        "speaker",
+        "text",
+        "sampleCredit",
+        "stemPackIncluded",
+        "stemBpm",
+        "stemKey",
+        "stemGroove",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/StudioSession" },
+      "description": "User-owned music production sessions and DSP console states."
+    },
+    "/users/{userId}/sessions/{sessionId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/StudioMessage" },
+      "description": "Ordered 3-participant studio conversation and inline stem pack records."
+    }
+  }
+}
