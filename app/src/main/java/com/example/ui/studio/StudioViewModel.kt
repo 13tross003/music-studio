@@ -186,6 +186,22 @@ class StudioViewModel(
         }
     }
 
+    fun applyDspPreset(preset: EngineerPreset) {
+        val current = audioEngine.dspParams.value
+        val grooveChanged = current.grooveStyle != preset.dsp.grooveStyle
+        updateDspFromConsole(preset.dsp, grooveChanged = grooveChanged)
+        _statusBanner.value = "Applied ${preset.name} (${preset.subtitle})"
+    }
+
+    fun sendSparkFromSuggestion(suggestion: StudioSuggestion) {
+        when (suggestion.targetRole) {
+            SpeakerRole.ENGINEER -> setTargetAgent(TargetAgent.ENGINEER_ONLY)
+            SpeakerRole.LYRICIST -> setTargetAgent(TargetAgent.LYRICIST_ONLY)
+            else -> setTargetAgent(TargetAgent.BOTH)
+        }
+        sendSpark(suggestion.prompt)
+    }
+
     fun sendSpark(rawInput: String) {
         val text = rawInput.trim()
         if (text.isBlank() || _isAgentThinking.value) return
